@@ -87,7 +87,7 @@ class GPT:
 
     # Отправка запроса
     def send_request(self, json):
-        resp = requests.post(url=self.URL, headers=self.HEADERS, json=json)
+        resp = requests.post(url=self.URL, headers=HEADERS, json=json)
         logging.info("Запрос отправлен")
         return resp
 
