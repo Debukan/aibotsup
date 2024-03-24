@@ -11,6 +11,8 @@ db_name = 'data.db'
 table_name = 'users'
 table_history = 'history'
 
+YAURL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+
 URl = f'gpt://{FOLDER_ID}/yandexgpt-lite'
 
 MAX_TOKENS = 500

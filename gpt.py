@@ -1,8 +1,7 @@
 import requests
 from transformers import AutoTokenizer
 import logging
-from config import URl, MAX_TOKENS, temperature, MAX_SESSIONS_TOKENS, SYSTEM_PROMPT, modes, HEADERS, FOLDER_ID
-
+from config import URl, MAX_TOKENS, temperature, MAX_SESSIONS_TOKENS, SYSTEM_PROMPT, modes, HEADERS, FOLDER_ID, YAURL
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -87,7 +86,7 @@ class GPT:
 
     # Отправка запроса
     def send_request(self, json):
-        resp = requests.post(url=self.URL, headers=HEADERS, json=json)
+        resp = requests.post(url=YAURL, headers=HEADERS, json=json)
         logging.info("Запрос отправлен")
         return resp
 
