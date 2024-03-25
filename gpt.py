@@ -20,7 +20,6 @@ class GPT:
     def count_tokens(prompt):
         data = {
             "modelUri": f"gpt://{FOLDER_ID}/yandexgpt/latest",
-            "maxTokens": MAX_SESSIONS_TOKENS,
             "text": prompt
         }
         return len(
