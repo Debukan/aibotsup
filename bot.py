@@ -204,6 +204,7 @@ def change_location_callback(call):
     db.update_data(user_id, 'location', call.data)
     bot.send_message(call.message.chat.id, 'Смена локации произведена')
     logging.info("Смена локации произведена")
+    bot.send_message(call.message.chat.id, "Чтобы начать сценарий введите команду /begin")
 
 
 # обработка команды для смены локации
@@ -307,6 +308,7 @@ def end_handler(message):
             db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             bot.send_message(message.chat.id, "Интересный сценарий получился")
             db.update_data(user_id, "prompt_active", 0)
+            db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
     else:
         bot.send_message(message.chat.id, "У вас нет активного запроса.")
     
@@ -342,7 +344,7 @@ def continue_handler(message):
             db.update_data(user_id, "prompt_active", 0)
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
             db.update_data(user_id, "tokens", data['tokens'] + gpt.count_tokens(response[1]))
-            keyboard = make_keyboard()
+            keyboard = make_keyboard(1)
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
         elif not response[0]:
             bot.send_message(message.chat.id, response[1])
