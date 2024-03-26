@@ -45,7 +45,7 @@ class GPT:
 
         # Проверка сообщения об ошибке
         try:
-            if "error" in full_response or 'choices' not in full_response:
+            if "error" in full_response:
                 self.clear_history()
                 logging.error(full_response)
                 return False, f"Ошибка: {full_response}"
@@ -74,13 +74,13 @@ class GPT:
                 "maxTokens": MAX_SESSIONS_TOKENS - used_tokens,
             },
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": modes[mode] + f"Главный герой - {data['person']} в жанре {data['genre']}. Место событий - {data['location']}"},
-                {"role": "assistant", "content": self.assistant_content}
+                {"role": "system", "text": SYSTEM_PROMPT},
+                {"role": "user", "text": modes[mode] + f"Главный герой - {data['person']} в жанре {data['genre']}. Место событий - {data['location']}"},
+                {"role": "assistant", "text": self.assistant_content}
             ]
         }
         logging.info("Промпт создан")
-        tokens = self.count_tokens(json['messages'][0]['content'] + json['messages'][1]['content'] + json['messages'][2]['content'])
+        tokens = self.count_tokens(json['messages'][0]['text'] + json['messages'][1]['text'] + json['messages'][2]['text'])
         return json, tokens
 
     # Отправка запроса

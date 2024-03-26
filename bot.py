@@ -39,6 +39,7 @@ db.create_table_token_usage()
 db.insert_token_usage_data(0)
 
 logging.info("Бот подготовился")
+print("Бот подготовлен")
 
 # список команд для команды help
 commands = {
@@ -254,7 +255,7 @@ def begin_handler(message):
             logging.error(response[1])
         else:
             keyboard = make_keyboard(3)
-            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['content'], response[1])
+            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
             db.update_data(user_id, "tokens", data['tokens'] + gpt.count_tokens(response[1]))
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]) + token1)
@@ -288,7 +289,7 @@ def end_handler(message):
         db.update_gpt(user_id, gpt.assistant_content)
         if response[1] == "Объяснение закончено":
             logging.info("Бот закончил объяснение")
-            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['content'], response[1])
+            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]))
             db.update_data(user_id, "prompt_active", 0)
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
@@ -303,7 +304,7 @@ def end_handler(message):
             keyboard = make_keyboard(1)
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]) + token1)
-            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['content'], response[1])
+            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             bot.send_message(message.chat.id, "Интересный сценарий получился")
             db.update_data(user_id, "prompt_active", 0)
     else:
@@ -336,7 +337,7 @@ def continue_handler(message):
         db.update_gpt(user_id, gpt.assistant_content)
         if response[1] == "Объяснение закончено":
             logging.info("Бот закончил объяснение")
-            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['content'], response[1])
+            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]))
             db.update_data(user_id, "prompt_active", 0)
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
@@ -351,7 +352,7 @@ def continue_handler(message):
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]) + token1)
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
-            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['content'], response[1])
+            db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             logging.info("Бот успешно выполнил запрос")
     else:
         bot.send_message(message.chat.id, "У вас нет активного запроса.")
