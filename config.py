@@ -6,27 +6,27 @@ ABOUTS = "Я бот сценарист, который напишет самый
 
 FOLDER_ID = ""
 
-db_name = 'data.db'
+DB_NAME = 'data.db'
 
-table_name = 'users'
-table_history = 'history'
+TABLE_NAME = 'users'
+TABLE_HISTORY = 'history'
 
 YAURL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
 
-URl = f'gpt://{FOLDER_ID}/yandexgpt-lite'
+URL = f'gpt://{FOLDER_ID}/yandexgpt-lite'
 
-MAX_TOKENS = 500
+MAX_TOKENS = 30
 
-temperature = 0.6
+TEMPERATURE = 0.6
 
 MAX_SESSIONS = 2
-MAX_SESSIONS_TOKENS = 100
+MAX_SESSIONS_TOKENS = 20
 
 CONTINUE_STORY = "Продолжи сюжет и оставь интригу. Ничего не поясняй"
 
 END_STORY = 'Напиши завершение истории c неожиданной развязкой. Ничего не поясняй'
 
-modes = {
+MODES = {
     "continue": "Продолжи сюжет и оставь интригу. Ничего не поясняй",
     "end": "Напиши завершение истории c неожиданной развязкой. Ничего не поясняй",
     "begin": "Начинаем с нуля. Ничего не поясняй"

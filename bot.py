@@ -32,7 +32,6 @@ bot.set_my_commands([
     telebot.types.BotCommand('end', 'Закончить сценарий'),
 ])
 
-db.prepare_db()
 db.create_table()
 db.create_table_history()
 db.create_table_token_usage()
@@ -99,31 +98,31 @@ def make_keyboard(num=2):
 
 # создание клавиатуры для выбора жанра
 def make_genre_keyboard():
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    button1 = telebot.types.InlineKeyboardButton(text='Фантастика', callback_data="fantasy")
-    button2 = telebot.types.InlineKeyboardButton(text='Детектив', callback_data="detective")
-    button3 = telebot.types.InlineKeyboardButton(text='Комедия', callback_data="comedy")
+    keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    button1 = telebot.types.KeyboardButton('Фантастика')
+    button2 = telebot.types.KeyboardButton('Детектив')
+    button3 = telebot.types.KeyboardButton('Комедия')
     keyboard.add(button1, button2, button3)
     return keyboard
 
 
 # создание клавиатуры для выбора персонажа
-def make_person_keyboard():
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    button1 = telebot.types.InlineKeyboardButton(text='Вася', callback_data="vasya")
-    button2 = telebot.types.InlineKeyboardButton(text='Саня', callback_data="sasha")
-    button3 = telebot.types.InlineKeyboardButton(text='Маша', callback_data="maria")
-    button4 = telebot.types.InlineKeyboardButton(text='Вика', callback_data="victoria")
+def make_person_keyboard(): 
+    keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    button1 = telebot.types.KeyboardButton('Вася')
+    button2 = telebot.types.KeyboardButton('Саня')
+    button3 = telebot.types.KeyboardButton('Маша')
+    button4 = telebot.types.KeyboardButton('Вика')
     keyboard.add(button1, button2, button3, button4)
     return keyboard
 
 
 # создание клавиатуры для выбора локации
 def make_location_keyboard():
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    button1 = telebot.types.InlineKeyboardButton(text='Золотой дворец', callback_data="golden-place")
-    button2 = telebot.types.InlineKeyboardButton(text='Подземелье', callback_data="dungeon")
-    button3 = telebot.types.InlineKeyboardButton(text='Лес', callback_data="forest")
+    keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    button1 = telebot.types.KeyboardButton('Золотой дворец')
+    button2 = telebot.types.KeyboardButton('Подземелье')
+    button3 = telebot.types.KeyboardButton('Лес')
     keyboard.add(button1, button2, button3)
     return keyboard
 
@@ -153,19 +152,15 @@ def about_message(message):
 
 
 # обработка нажатия на кнопку со сменой персонажа
-@bot.callback_query_handler(func=lambda call: call.data in ['vasya', 'sasha', 'maria', 'victoria'])
-def change_person_callback(call):
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
-    data = db.get_data_for_user(get_id(call.message))
-    user_id = get_id(call.message)
-    db.update_data(user_id, 'person', call.data)
-    bot.send_message(call.message.chat.id, 'Смена персонажа произведена')
+@bot.message_handler(func=lambda message: message.text in ['Вася', 'Саня', 'Маша', 'Вика'])
+def change_person_callback(message):
+    data = db.get_data_for_user(get_id(message))
+    user_id = get_id(message)
+    db.update_data(user_id, 'person', message.text)
     logging.info("Смена персонажа произведена")
-    if data['genre'] == "":
-        change_genre(call.message)
-    elif data['location'] == "":
-        change_location(call.message)
-
+    bot.send_message(message.chat.id, "Персонаж успешно выбран.")
+    check_parameters(message)
+    
 
 # обработка команды change_pearson для смены персонажа
 @bot.message_handler(commands=['change_pearson'])
@@ -174,18 +169,17 @@ def change_person(message):
     keyboard = make_person_keyboard()
     bot.send_message(message.chat.id, 'Выберите персонажа', reply_markup=keyboard)
     
-
+    
 # обработка нажатия на кнопку со сменой жанра
-@bot.callback_query_handler(func=lambda call: call.data in ['fantasy', 'detective', 'comedy'])
-def change_genre_callback(call):
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
-    data = db.get_data_for_user(get_id(call.message))
-    user_id = get_id(call.message)
-    db.update_data(user_id, 'genre', call.data)
-    bot.send_message(call.message.chat.id, 'Смена жанра произведена')
+@bot.message_handler(func=lambda message: message.text in ['Фантастика', 'Детектив', 'Комедия'])
+def change_genre_callback(message):
+    data = db.get_data_for_user(get_id(message))
+    user_id = get_id(message)
+    db.update_data(user_id, 'genre', message.text)
     logging.info("Смена жанра произведена")
-    if data['location'] == "":
-        change_location(call.message)
+    bot.send_message(message.chat.id, "Жанр успешно выбран.")
+    check_parameters(message)
+    
 
 # обработка команды change_genre для смены жанра задачи
 @bot.message_handler(commands=['change_genre'])
@@ -196,15 +190,14 @@ def change_genre(message):
 
 
 # обработка нажатия на кнопку со сменой локации
-@bot.callback_query_handler(func=lambda call: call.data in ['golden-place', 'dungeon', 'forest'])
-def change_location_callback(call):
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
-    data = db.get_data_for_user(get_id(call.message))
-    user_id = get_id(call.message)
-    db.update_data(user_id, 'location', call.data)
-    bot.send_message(call.message.chat.id, 'Смена локации произведена')
+@bot.message_handler(func=lambda message: message.text in ['Золотой дворец', 'Подземелье', 'Лес'])
+def change_location_callback(message):
+    data = db.get_data_for_user(get_id(message))
+    user_id = get_id(message)
+    db.update_data(user_id, 'location', message.text)
     logging.info("Смена локации произведена")
-    bot.send_message(call.message.chat.id, "Чтобы начать сценарий введите команду /begin")
+    bot.send_message(message.chat.id, "Локация успешно выбрана.")
+    bot.send_message(message.chat.id, "Теперь можно начать сюжет через команду /begin")
 
 
 # обработка команды для смены локации
@@ -219,8 +212,22 @@ def change_location(message):
 @bot.message_handler(commands=['debug'])
 def send_logs(message):
     logging.info("Файл был отправлен")
-    with open("log_file.txt", "rb") as f:
+    with open("log_file.log", "rb") as f:
         bot.send_document(message.chat.id, f)
+
+
+# включение debug_mode
+@bot.message_handler(commands=['debug_mode'])
+def debug_mode(message):
+    data = db.get_data_for_user(get_id(message))
+    if data['debug_mode'] == 1:
+        db.update_data(get_id(message), 'debug_mode', 0)
+        bot.send_message(message.chat.id, "Debug mode отключен")
+        logging.info("Debug mode отключен")
+    else:
+        db.update_data(get_id(message), 'debug_mode', 1)
+        bot.send_message(message.chat.id, "Debug mode включен")
+        logging.info("Debug mode включен")
 
 
 # обработка нажатия на кнопку begin
@@ -235,7 +242,7 @@ def begin_handler(message):
     data = user_check(message)
     user_id = get_id(message)
     tokens = db.get_token_usage()
-    if data['session_number'] == config.MAX_SESSIONS:
+    if data['session_number'] >= config.MAX_SESSIONS:
         bot.send_message(message.chat.id, "Достигнут лимит сессий")
         return
     elif tokens >= config.MAX_TOKENS:
@@ -249,12 +256,19 @@ def begin_handler(message):
         gpt.clear_history()
         json, token1 = gpt.make_prompt(data, "begin")
         full_response = gpt.send_request(json)
-        response = gpt.process_resp(full_response)
+        if data['debug_mode'] == 1:
+            response = gpt.process_resp(full_response, data)
+        else:
+            response = gpt.process_resp(full_response)
         db.update_gpt(user_id, gpt.assistant_content)
         if not response[0]:
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             bot.send_message(message.chat.id, response[1])
             logging.error(response[1])
         else:
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             keyboard = make_keyboard(3)
             db.add_history(user_id, message.from_user.first_name, json['messages'][1]['text'], response[1])
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
@@ -286,7 +300,10 @@ def end_handler(message):
         bot.send_message(message.chat.id, "Выполняю запрос")
         json, token1 = gpt.make_prompt(data, "end", data['session_tokens'])
         full_response = gpt.send_request(json)
-        response = gpt.process_resp(full_response)
+        if data['debug_mode'] == 1:
+            response = gpt.process_resp(full_response, data)
+        else:
+            response = gpt.process_resp(full_response)
         db.update_gpt(user_id, gpt.assistant_content)
         if response[1] == "Объяснение закончено":
             logging.info("Бот закончил объяснение")
@@ -295,13 +312,19 @@ def end_handler(message):
             db.update_data(user_id, "prompt_active", 0)
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
             db.update_data(user_id, "tokens", data['tokens'] + gpt.count_tokens(response[1]))
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             keyboard = make_keyboard(1)
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
             bot.send_message(message.chat.id, "Интересный сценарий получился")
         elif not response[0]:
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             bot.send_message(message.chat.id, response[1])
             logging.error(response[1])
         else:
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             keyboard = make_keyboard(1)
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]) + token1)
@@ -326,7 +349,7 @@ def continue_handler(message):
     user_id = get_id(message)
     data = user_check(message)
     if data['prompt_active']:
-        if data['session_tokens'] >= config.MAX_TOKENS:
+        if data['session_tokens'] >= config.MAX_SESSIONS_TOKENS:
             bot.send_message(message.chat.id, "Достигнут лимит токенов. Начните новый сценарий.")
             return
         if data['tokens'] >= config.MAX_TOKENS:
@@ -335,7 +358,10 @@ def continue_handler(message):
         bot.send_message(message.chat.id, "Выполняю запрос")
         json, token1 = gpt.make_prompt(data, "continue", data['session_tokens'])
         full_response = gpt.send_request(json)
-        response = gpt.process_resp(full_response)
+        if data['debug_mode'] == 1:
+            response = gpt.process_resp(full_response, data)
+        else:
+            response = gpt.process_resp(full_response)
         db.update_gpt(user_id, gpt.assistant_content)
         if response[1] == "Объяснение закончено":
             logging.info("Бот закончил объяснение")
@@ -344,12 +370,18 @@ def continue_handler(message):
             db.update_data(user_id, "prompt_active", 0)
             db.update_data(user_id, "session_tokens", data['session_tokens'] + gpt.count_tokens(response[1]))
             db.update_data(user_id, "tokens", data['tokens'] + gpt.count_tokens(response[1]))
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             keyboard = make_keyboard(1)
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
         elif not response[0]:
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             bot.send_message(message.chat.id, response[1])
             logging.error(response[1])
         else:
+            if data['debug_mode'] == 1:
+                bot.send_message(message.chat.id, response[2])
             keyboard = make_keyboard(3)
             bot.send_message(message.chat.id, response[1], reply_markup=keyboard)
             db.update_usage_token(db.get_token_usage() + gpt.count_tokens(response[1]) + token1)

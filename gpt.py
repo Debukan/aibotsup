@@ -1,7 +1,6 @@
 import requests
-from transformers import AutoTokenizer
 import logging
-from config import URl, MAX_TOKENS, temperature, MAX_SESSIONS_TOKENS, SYSTEM_PROMPT, modes, HEADERS, FOLDER_ID, YAURL
+from config import URL, MAX_TOKENS, TEMPERATURE, MAX_SESSIONS_TOKENS, SYSTEM_PROMPT, MODES, HEADERS, FOLDER_ID, YAURL
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -12,7 +11,7 @@ logging.basicConfig(
 
 class GPT:
     def __init__(self):
-        self.URL = URl
+        self.url = URL
         self.MAX_TOKENS = MAX_TOKENS
         self.assistant_content = "Сценарий:\n"
 
@@ -29,7 +28,11 @@ class GPT:
                 headers=HEADERS
             ).json()['tokens']
     )
-    def process_resp(self, response) -> [bool, str]:
+    def process_resp(self, response, data=None) -> [bool, str]:
+        if data != None:
+            logging.info(f"Запрос: {response}")
+            logging.info(f"Статус запроса: {response.status_code}")
+
         # Проверка статус кода
         if response.status_code < 200 or response.status_code >= 300:
             self.clear_history()
@@ -45,10 +48,13 @@ class GPT:
 
         # Проверка сообщения об ошибке
         try:
-            if "error" in full_response:
+            if "error" in full_response or "result" not in full_response or "alternatives" not in full_response['result']:
                 self.clear_history()
                 logging.error(full_response)
-                return False, f"Ошибка: {full_response}"
+                if data != None:
+                    return False, f"Ошибка: {full_response}", f"Cтатус запроса: {response.status_code}"
+                else:
+                    return False, f"Ошибка: {full_response}"
         except:
             self.clear_history()
             return False, "Ошибка получения JSON"
@@ -56,29 +62,36 @@ class GPT:
         result = full_response["result"]["alternatives"][0]["message"]["text"]
 
         # Пустой результат == объяснение закончено
-        if result == "" or result is None:
+        if result is None or result == "":
             logging.info("Закончено")
             self.clear_history()
-            return True, "Объяснение закончено"
+            if data!=None:
+                return True, "Объяснение закончено", f"Cтатус запроса: {response.status_code}"
+            else:
+                return True, "Объяснение закончено"
 
         # Сохраняем сообщение в историю
         self.save_history(result)
-        return True, self.assistant_content
+        if data != None:
+            return True, self.assistant_content, f"Cтатус запроса: {response.status_code}"
+        else:
+            return True, self.assistant_content
 
     def make_prompt(self, data, mode, used_tokens=0):
         json = {
-            "modelUri": self.URL,
+            "modelUri": URL,
             "completionOptions": {
                 "stream": False,
-                "temperature": temperature,
+                "temperature": TEMPERATURE,
                 "maxTokens": MAX_SESSIONS_TOKENS - used_tokens,
             },
             "messages": [
-                {"role": "system", "text": SYSTEM_PROMPT},
-                {"role": "user", "text": modes[mode] + f"Главный герой - {data['person']} в жанре {data['genre']}. Место событий - {data['location']}"},
+                {"role": "system", "text": SYSTEM_PROMPT}, 
+                {"role": "user", "text": MODES[mode] + f"Главный герой - {data['person']} в жанре {data['genre']}. Место событий - {data['location']}"},
                 {"role": "assistant", "text": self.assistant_content}
             ]
         }
+        print(json)
         logging.info("Промпт создан")
         tokens = self.count_tokens(json['messages'][0]['text'] + json['messages'][1]['text'] + json['messages'][2]['text'])
         return json, tokens

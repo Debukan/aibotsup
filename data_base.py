@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 import os
-from config import db_name, table_name
+from config import DB_NAME, TABLE_NAME
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,15 +13,18 @@ logging.basicConfig(
 
 class DataBase:
     def __init__(self):
-        self.conn = None
+        self.conn = self.prepare_db()
+
 
     # подготовка базы данных
     def prepare_db(self):
         try:
-            self.conn = sqlite3.connect(db_name, check_same_thread=False)
+            conn = sqlite3.connect(DB_NAME, check_same_thread=False)
             logging.info("Database is ready")
+            return conn
         except Exception as e:
             logging.error(e)
+            exit(1)
 
 
     # функция для отправки запроса
@@ -69,7 +72,8 @@ class DataBase:
             location TEXT DEFAULT '',
             session_number INTEGER DEFAULT 0,
             session_tokens INTEGER DEFAULT 0,
-            tokens INTEGER DEFAULT 0
+            tokens INTEGER DEFAULT 0,
+            debug_mode INTEGER DEFAULT 0
         );
         """
         cursor.execute(create_table_query)
@@ -134,19 +138,19 @@ class DataBase:
 
 
     # добавление пользователя в базу данных
-    def add_user(self, user_id, username = "", answer = "", prompt = "", prompt_active = 0, person = "", genre = "", location = "", session_number=0, session_tokens=0, tokens=0):
+    def add_user(self, user_id, username = "", answer = "", prompt = "", prompt_active = 0, person = "", genre = "", location = "", session_number=0, session_tokens=0, tokens=0, debug_mode=0):    
         add_user_query = f"""
-        INSERT INTO users(user_id, username, answer, prompt, prompt_active, person, genre, location, session_number, session_tokens, tokens)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        INSERT INTO users(user_id, username, answer, prompt, prompt_active, person, genre, location, session_number, session_tokens, tokens, debug_mode)
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         WHERE NOT EXISTS (SELECT 1 FROM users WHERE user_id = ?);
         """
-        self.execute_query(add_user_query, [user_id, username, answer, prompt, prompt_active, person, genre, location, session_number, session_tokens, tokens, user_id])
+        self.execute_query(add_user_query, [user_id, username, answer, prompt, prompt_active, person, genre, location, session_number, session_tokens, tokens, debug_mode, user_id])
         logging.info(f"DATABASE: User added")
 
 
     # проверка есть ли такой столбец в таблице users
     def is_value_in_table(self, column_name, value):
-        sql_query = f'SELECT EXISTS (SELECT 1 FROM {table_name} WHERE {column_name} = ?)'
+        sql_query = f'SELECT EXISTS (SELECT 1 FROM {TABLE_NAME} WHERE {column_name} = ?)'
         rows = self.execute_selection_query(sql_query, [value])
         return len(rows) > 0
 
@@ -155,7 +159,7 @@ class DataBase:
     def get_data_for_user(self, user_id):
         if self.is_value_in_table('user_id', user_id):
             sql_query = f'SELECT *' \
-                        f'FROM {table_name} WHERE user_id = ? LIMIT 1'
+                        f'FROM {TABLE_NAME} WHERE user_id = ? LIMIT 1'
             row = self.execute_selection_query(sql_query, [user_id])[0]
             result = {
                 "username": row[2],
@@ -167,7 +171,8 @@ class DataBase:
                 "location": row[8],
                 "session_number": row[9],
                 "session_tokens": row[10],
-                "tokens": row[11]
+                "tokens": row[11],
+                "debug_mode": row[12]
             }
             logging.info(f"DATABASE: The data has been returned")
             return result
@@ -185,6 +190,7 @@ class DataBase:
                 "session_number": 0,
                 "session_tokens": 0,
                 "tokens": 0,
+                "debug_mode": 0
             }
 
 
@@ -207,7 +213,7 @@ class DataBase:
 
     # очистка таблицы users
     def clean_table(self):
-        self.execute_query(f'DELETE FROM {table_name}')
+        self.execute_query(f'DELETE FROM {TABLE_NAME}')
         logging.info(f"DATABASE: Table cleaned")
 
 
