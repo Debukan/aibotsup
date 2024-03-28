@@ -156,18 +156,22 @@ def about_message(message):
 def change_person_callback(message):
     data = db.get_data_for_user(get_id(message))
     user_id = get_id(message)
-    db.update_data(user_id, 'person', message.text)
+    if message.text in ['Вася', 'Саня', 'Маша', 'Вика']:
+        db.update_data(user_id, 'person', message.text)
+    else:
+       bot.send_message(message.chat.id, "Нет такого персонажа")
     logging.info("Смена персонажа произведена")
     bot.send_message(message.chat.id, "Персонаж успешно выбран.")
     check_parameters(message)
     
 
 # обработка команды change_pearson для смены персонажа
-@bot.message_handler(commands=['change_pearson'])
+@bot.message_handler(commands=['change_person'])
 def change_person(message):
     data = db.get_data_for_user(get_id(message))
     keyboard = make_person_keyboard()
     bot.send_message(message.chat.id, 'Выберите персонажа', reply_markup=keyboard)
+    bot.register_next_step_handler(message, change_person_callback)
     
     
 # обработка нажатия на кнопку со сменой жанра
@@ -175,7 +179,10 @@ def change_person(message):
 def change_genre_callback(message):
     data = db.get_data_for_user(get_id(message))
     user_id = get_id(message)
-    db.update_data(user_id, 'genre', message.text)
+    if message.text in ['Фантастика', 'Детектив', 'Комедия']:
+        db.update_data(user_id, 'genre', message.text)
+    else:
+        bot.send_message(message.chat.id, "Нет такого жанра")
     logging.info("Смена жанра произведена")
     bot.send_message(message.chat.id, "Жанр успешно выбран.")
     check_parameters(message)
@@ -187,6 +194,7 @@ def change_genre(message):
     data = db.get_data_for_user(get_id(message))
     keyboard = make_genre_keyboard()
     bot.send_message(message.chat.id, 'Выберите жанр', reply_markup=keyboard)
+    bot.register_next_step_handler(message, change_genre_callback)
 
 
 # обработка нажатия на кнопку со сменой локации
@@ -194,7 +202,10 @@ def change_genre(message):
 def change_location_callback(message):
     data = db.get_data_for_user(get_id(message))
     user_id = get_id(message)
-    db.update_data(user_id, 'location', message.text)
+    if message.text in ['Золотой дворец', 'Подземелье', 'Лес']:
+        db.update_data(user_id, 'location', message.text)
+    else:
+        bot.send_message(message.chat.id, "Нет такой локации")
     logging.info("Смена локации произведена")
     bot.send_message(message.chat.id, "Локация успешно выбрана.")
     bot.send_message(message.chat.id, "Теперь можно начать сюжет через команду /begin")
@@ -206,6 +217,7 @@ def change_location(message):
     data = db.get_data_for_user(get_id(message))
     keyboard = make_location_keyboard()
     bot.send_message(message.chat.id, 'Выберите локацию', reply_markup=keyboard)
+    bot.register_next_step_handler(message, change_location_callback)
 
 
 #отправка файла с логами
