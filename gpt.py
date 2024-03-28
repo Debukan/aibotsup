@@ -33,11 +33,17 @@ class GPT:
             logging.info(f"Запрос: {response}")
             logging.info(f"Статус запроса: {response.status_code}")
 
-        # Проверка статус кода
-        if response.status_code < 200 or response.status_code >= 300:
+    # Проверка статус кода
+        try:            
+            if response.status_code < 200 or response.status_code >= 300:
+                if response.status_code == 204:
+                    logging.warning("Статус: 204 No Content")
+                self.clear_history()
+                logging.error(response.text)
+                return False, f"Ошибка: {response.status_code}"
+        except:
             self.clear_history()
-            logging.error(response.text)
-            return False, f"Ошибка: {response.status_code}"
+            return False, "Ошибка получения статус кода"
 
         # Проверка json
         try:
@@ -58,8 +64,12 @@ class GPT:
         except:
             self.clear_history()
             return False, "Ошибка получения JSON"
-
-        result = full_response["result"]["alternatives"][0]["message"]["text"]
+        
+        try:
+            result = full_response["result"]["alternatives"][0]["message"]["text"]
+        except:
+            self.clear_history()
+            return False, "Ошибка получения результата"
 
         # Пустой результат == объяснение закончено
         if result is None or result == "":
